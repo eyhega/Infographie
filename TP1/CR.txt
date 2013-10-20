@@ -1,0 +1,23 @@
+DAFFIX Jeremy
+DUFAURE Antoine
+EYHERAMONO Gaetan
+
+5. Il y a deux triangles modelise
+6. Les triangles inversent leur position (les sommets sont liste dans le mauvais ordre)
+7. glColor3f(0.5f, 0.0f, 0.5f);
+	glBegin(GL_TRIANGLES);
+		glVertex3fv(sommets[1]);
+		glVertex3fv(sommets[2]);
+		glVertex3fv(sommets[3]);
+
+		glVertex3fv(sommets[0]);
+		glVertex3fv(sommets[1]);
+		glVertex3fv(sommets[3]);
+	glEnd();
+	glColor3f(1.f, 1.f, 1.f);
+
+8. glPolygonMode(GL_FRONT, GL_FILL); // was set to GL_LINE
+9. glColor3f(0.5f, 0.0f, 0.5f); juste avant de creer les triangles puis on remet la couleur a blanc pour la theiere.
+10. glShadeModel (GL_SMOOTH);	// was set to GL_FLAT
+11. Lorsque l'on modifie l'ordre, on s'apercoit que les triangles passent au premier plan et cache la theiere.
+12.  
