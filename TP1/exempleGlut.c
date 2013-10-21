@@ -214,6 +214,25 @@ void mouse (int button, int state, int x, int y)
 }
 
 
+/*
+ *      @   --------------    @
+ *      |                     |
+ *      @   --------------    @                     
+ */
+void    drawRectangle2D(float width,
+                        float height)
+{
+    float   sh = abs(width * 0.5f);
+    float   sw = abs(height * 0.5f);
+    
+    glBegin(GL_POLYGON);
+        glVertex3f(-sw, -sh, .0f);
+        glVertex3f(+sw, -sh, .0f);
+        glVertex3f(+sw, +sh, .0f);
+        glVertex3f(-sw, +sh, .0f);
+    glEnd();
+}
+
 
 
 
