@@ -1,5 +1,5 @@
 COMPIL_OPTIONS = -g -Wall -ansi -pedantic
-LINK_OPTIONS = -lm -lSDL -lGLU -lglut -lGL
+LINK_OPTIONS = -lm -lGLU -lglut -lGL
 COMPILER = gcc
 
 
