@@ -37,22 +37,26 @@ static GLfloat rotx = 0.0;       /* Rotation autour de x      */
 static GLfloat roty = 0.0;       /* Rotation autour de y      */
 static GLfloat posx,posy, posz;
 
-static float xLight=1., yLight=2., zLight = 3.0;
+static float xLight=1., yLight=1.5, zLight = 1.;
+GLfloat light_pos[4] = {1.,1.5,1.,1.};
 
 static unsigned int delay = 100; /* milisecondes              */
 
 static int prex = -1, prey = -1;
 
 static GLfloat sommets[][3]={{-0.5, -0.5, 0.0}, {0.5, -0.5, 0.0}, {0.5, 0.5, 0.0}, {-0.5, 0.5, 0.0}};
+
+GLfloat plane[4] = {0.,1.,0.,0.8}; /* equation du sol */
+
 void    drawParaCube( float inXR,
                               float inYR,
                               float inZR);
 void    drawRectangle2D(float width,
                         float height);
 void rotateLight();
-
+void initCastShadows();
 void drawTable(float inXR,float inYR,float inZR,float footWidth,float footHeight);
-void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, int nbFoot);
+void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, float footWidth);
 /*  
  * GL_SMOOTH is actually the default shading model.  
  */
@@ -78,18 +82,16 @@ void init (void)
 	GLfloat light_ambient[] = {0.4,0.4,0.4,1.};
 	GLfloat light_diffuse[] = {1.,1.,1.,1.};
 	GLfloat light_specular[] = {1.,1.,1.,1.};
-	GLfloat light_position[] = {1.,2.,3.,1.};
 	
 	glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
 	glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
 	glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
-	glLightfv(GL_LIGHT0,GL_POSITION,light_position);
+	glLightfv(GL_LIGHT0,GL_POSITION,light_pos);
 	
 	//FIX LIGHT SOURCE
 	/*glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glLightfv(GL_LIGHT0,GL_POSITION,light_position);
-	glutSolidSphere(1,50,50);*/
+	glLightfv(GL_LIGHT0,GL_POSITION,light_position);*/
 	
 	//LIGHT SOURCE MOVING
 	glMatrixMode(GL_MODELVIEW);
@@ -97,7 +99,7 @@ void init (void)
 	//Proprietes materielles
 	GLfloat matZero[4] = {0.,0.,0.,1.};
 	GLfloat matAmb[4] = {0.2,0.5,0.5,0.3};
-	GLfloat matDif[4] = {0.7,0.3,0.,0.8};
+	GLfloat matDif[4] = {1.,1.,1.,0.5};//{0.7,0.3,0.,0.8};
 	GLfloat matShine = 20.00;
 	
 	glMaterialfv(GL_FRONT,GL_AMBIENT,matAmb);
@@ -105,23 +107,65 @@ void init (void)
 	glMaterialfv(GL_FRONT,GL_SPECULAR,matZero);
 	glMaterialfv(GL_FRONT,GL_SHININESS,&matShine);
 	
+	initCastShadows();
 	
 	glLoadIdentity();
-	glRotatef(90,0.,1.,0);
-	glLightfv(GL_LIGHT0,GL_POSITION,light_position);
-	glRotatef(-90,0.,1.,0);
-	glutSolidSphere(1,50,50);
+}
+
+void shadowMatrix(GLfloat shadowMat[4][4])
+{
+	GLfloat dot;
+	
+	dot = plane[0]*light_pos[0] + plane[1]*light_pos[1] + plane[2]*light_pos[2] + plane[3]*light_pos[3];
+	
+	shadowMat[0][0] = dot - light_pos[0] * plane[0];
+	shadowMat[1][0] = 0.f - light_pos[0] * plane[1];
+	shadowMat[2][0] = 0.f - light_pos[0] * plane[2];
+	shadowMat[3][0] = 0.f - light_pos[0] * plane[3];
+	
+	shadowMat[0][1] = 0.f - light_pos[1] * plane[0];
+	shadowMat[1][1] = dot - light_pos[1] * plane[1];
+	shadowMat[2][1] = 0.f - light_pos[1] * plane[2];
+	shadowMat[3][1] = 0.f - light_pos[1] * plane[3];
+	
+	shadowMat[0][2] = 0.f - light_pos[2] * plane[0];
+	shadowMat[1][2] = 0.f - light_pos[2] * plane[1];
+	shadowMat[2][2] = dot - light_pos[2] * plane[2];
+	shadowMat[3][2] = 0.f - light_pos[2] * plane[3];
+	
+	shadowMat[0][3] = 0.f - light_pos[3] * plane[0];
+	shadowMat[1][3] = 0.f - light_pos[3] * plane[1];
+	shadowMat[2][3] = 0.f - light_pos[3] * plane[2];
+	shadowMat[3][3] = dot - light_pos[3] * plane[3];
+}
+
+void initCastShadows()
+{
+	glClear(GL_STENCIL_BUFFER_BIT);
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS,1,1);
+	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 }
 
 void rotateLight() {
 	
-	xLight += 0.1;
-	yLight += 0.1;
-	float sinX = sinf(xLight);
-	float cosY = cosf(yLight);
-	GLfloat light_pos[] = {sinX,cosY,zLight,1.};
+	xLight += 0.05;
+	zLight += 0.05;
+	//yLight += 0.1;
+	//float sinX = sinf(xLight);
+	float cosX = sinf(xLight);
+	float sinZ = cosf(zLight);
+	//float cosY = cosf(yLight);
+	light_pos[0] = cosX;
+	light_pos[2] = sinZ;
 	glLightfv(GL_LIGHT0,GL_POSITION,light_pos);
 	
+	/*
+	static a = 0;
+	glRotated(a,0,1,0);
+	glLightfv(GL_LIGHT0,GL_POSITION,light_pos);
+	glRotated(-a,0,1,0);
+	a++;*/
 	
 	glutPostRedisplay();
 }
@@ -164,10 +208,9 @@ void randSolidCubeOnTable() {
 	}
 }
 
-void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, int nbFoot) {
+void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, float footWidth) {
 	
 	glColor3f(0.5,0.4,0.5);
-	float footWidth = 0.05;
 	glPushMatrix();
 		glTranslatef(xPos,yPos,zPos);
 		drawParaCube(0.025,width,width);
@@ -184,11 +227,16 @@ void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, int 
 			drawParaCube(inHeight*0.66,footWidth,footWidth);
 		glPopMatrix();
 		
+		
+		//draw the base by transparence
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		//draw the rest of the chair
 		glPushMatrix();
 			glTranslatef(0.,(inHeight*0.75)/2.,width/2. - 0.025/2.);
 			drawParaCube(inHeight*0.75,width,0.025);
 		glPopMatrix();
+		glDisable(GL_BLEND); //disable transparence
 		
 	glPopMatrix();
 }
@@ -197,7 +245,11 @@ void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, int 
 void drawScene(float scale) {
 	//triangle(sommets);
 	
-	drawTable(0.05*scale,1.5*scale,1.0*scale,0.1*scale,0.8*scale);
+	//draw objects on the table first (to have a logic shadow)
+	glPushMatrix();
+		glTranslatef(0.5*scale,0.075*scale,0.);
+		glutSolidCube(0.1*scale);
+	glPopMatrix();
 	
 	glPushMatrix();
 		glTranslatef(0.,0.05*scale+0.05*scale,0.);
@@ -213,27 +265,24 @@ void drawScene(float scale) {
 		glutSolidCube(0.1*scale);
 	glPopMatrix();
 	
-	glPushMatrix();
-		glTranslatef(0.5*scale,0.075*scale,0.);
-		glutSolidCube(0.1*scale);
-	glPopMatrix();
-	
-	//randSolidCubeOnTable();
 	
 	//draw some chairs
-	drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,5*scale);
+	drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPushMatrix();
 		glRotatef(180.,0.,1.,0.);
-		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,5*scale);
+		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPopMatrix();
 	glPushMatrix();
 		glRotatef(90.,0.,1.,0.);
-		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,5*scale);
+		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPopMatrix();
 	glPushMatrix();
 		glRotatef(-90.,0.,1.,0.);
-		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,5*scale);
+		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPopMatrix();
+	
+	//draw the table
+	drawTable(0.05*scale,1.5*scale,1.0*scale,0.1*scale,0.8*scale);
 	
 }
 
@@ -246,6 +295,7 @@ void display(void)
 	static float posYChair 	= 2.;
 	static float posZChair 	= 0.;
 	static int counterRotate = 0;
+	static GLfloat matrix[4][4];
 	
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glColor3f(1.0, 1.0, 1.0); 
@@ -254,12 +304,25 @@ void display(void)
 	glRotatef (rotx, 1.0, 0.0, 0.0);
     glRotatef (roty, 0.0, 1.0, 0.0);
 
+
 	glPushMatrix();
 		glTranslatef(0.,-0.80,0.);
-		drawParaCube(0.05,2.,2.);
+		drawParaCube(0.05,5.,5.);
 	glPopMatrix();
 	
 	//randSolidCubeOnTable();
+	shadowMatrix(matrix);
+	glStencilFunc(GL_EQUAL,1,1);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glPushMatrix();
+		glMultMatrixf((GLfloat*)matrix);
+		drawScene(1.);
+	glPopMatrix();
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
+	glEnable(GL_LIGHTING);
+	
 	drawScene(1.);
 	glPushMatrix();
 		float scale = 0.3;
@@ -269,7 +332,7 @@ void display(void)
 		}
     glPopMatrix();
     
-    
+    /*
     glPushMatrix();
 		counterRotate++;
 		switch(counterRotate%4) {
@@ -288,7 +351,7 @@ void display(void)
 		posYChair+=0.0005;
 		posZChair+=0.0005;
 		drawChair(posXChair,cos(posYChair),sin(posZChair),0.75,0.4,5);
-	glPopMatrix();
+	glPopMatrix();*/
 	
     
     glPopMatrix();
