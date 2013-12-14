@@ -107,9 +107,10 @@ void init (void)
 	glMaterialfv(GL_FRONT,GL_SPECULAR,matZero);
 	glMaterialfv(GL_FRONT,GL_SHININESS,&matShine);
 	
-	initCastShadows();
+	
 	
 	glLoadIdentity();
+    initCastShadows();
 }
 
 void shadowMatrix(GLfloat shadowMat[4][4])
@@ -211,7 +212,10 @@ void randSolidCubeOnTable() {
 void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, float footWidth) {
 	
 	glColor3f(0.5,0.4,0.5);
+        
+    
 	glPushMatrix();
+        
 		glTranslatef(xPos,yPos,zPos);
 		drawParaCube(0.025,width,width);
 		
@@ -228,8 +232,9 @@ void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, floa
 		glPopMatrix();
 		
 		
-		//draw the base by transparence
-		glEnable(GL_BLEND);
+        //draw the base by transparence
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		//draw the rest of the chair
 		glPushMatrix();
@@ -237,6 +242,36 @@ void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, floa
 			drawParaCube(inHeight*0.75,width,0.025);
 		glPopMatrix();
 		glDisable(GL_BLEND); //disable transparence
+        glEnable(GL_DEPTH_TEST);
+		
+	glPopMatrix();
+}
+
+void drawChairShadow(float xPos,float yPos,float zPos,float inHeight,float width, float footWidth) {
+	
+	glColor3f(0.5,0.4,0.5);
+	glPushMatrix();
+        
+		glTranslatef(xPos,yPos,zPos);
+		drawParaCube(0.025,width,width);
+		
+		//draw feet
+		glPushMatrix();
+			glTranslatef(-width/2. + footWidth/2.,-(inHeight*0.66)/2.,-width/2. + footWidth/2.);
+			drawParaCube(inHeight*0.66,footWidth,footWidth);
+			glTranslatef(width - footWidth,0.,0.);
+			drawParaCube(inHeight*0.66,footWidth,footWidth);
+			glTranslatef(0.,0.,width - footWidth);
+			drawParaCube(inHeight*0.66,footWidth,footWidth);
+			glTranslatef(-width + footWidth,0.,0.);
+			drawParaCube(inHeight*0.66,footWidth,footWidth);
+		glPopMatrix();
+		
+		//draw the rest of the chair
+		glPushMatrix();
+			glTranslatef(0.,(inHeight*0.75)/2.,width/2. - 0.025/2.);
+			drawParaCube(inHeight*0.75,width,0.025);
+		glPopMatrix();
 		
 	glPopMatrix();
 }
@@ -244,6 +279,52 @@ void drawChair(float xPos,float yPos,float zPos,float inHeight,float width, floa
 
 void drawScene(float scale) {
 	//triangle(sommets);
+	
+	//draw some chairs
+    glPushMatrix();
+        drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+    glPopMatrix();
+	glPushMatrix();
+		glRotatef(180.,0.,1.,0.);
+		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+	glPopMatrix();
+	glPushMatrix();
+		glRotatef(90.,0.,1.,0.);
+		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+	glPopMatrix();
+	glPushMatrix();
+		glRotatef(-90.,0.,1.,0.);
+		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+	glPopMatrix();
+    
+    
+	//draw the table
+    glPushMatrix();
+        drawTable(0.05*scale,1.5*scale,1.0*scale,0.1*scale,0.8*scale);
+    glPopMatrix();
+    
+	//draw objects on the table first (to have a logic shadow)
+	glPushMatrix();
+		glTranslatef(0.5*scale,0.075*scale,0.);
+		glutSolidCube(0.1*scale);
+	glPopMatrix();
+	
+	glPushMatrix();
+		glTranslatef(0.,0.05*scale+0.05*scale,0.);
+		glutWireTeapot(0.1*scale);
+	glPopMatrix();
+	
+	glPushMatrix();
+		glTranslatef(-0.5*scale,0.075*scale,0.*scale);
+		glutSolidCube(0.1*scale);
+		glTranslatef(-0.01*scale,0.1*scale,0.*scale);
+		glutSolidCube(0.1*scale);
+		glTranslatef(+0.03*scale,0.1*scale,0.);
+		glutSolidCube(0.1*scale);
+	glPopMatrix();
+}
+
+void drawSceneShadow(float scale) {
 	
 	//draw objects on the table first (to have a logic shadow)
 	glPushMatrix();
@@ -264,27 +345,30 @@ void drawScene(float scale) {
 		glTranslatef(+0.03*scale,0.1*scale,0.);
 		glutSolidCube(0.1*scale);
 	glPopMatrix();
-	
-	
+    
 	//draw some chairs
-	drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+    glPushMatrix();
+        drawChairShadow(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+    glPopMatrix();
 	glPushMatrix();
 		glRotatef(180.,0.,1.,0.);
-		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+		drawChairShadow(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPopMatrix();
 	glPushMatrix();
 		glRotatef(90.,0.,1.,0.);
-		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+		drawChairShadow(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPopMatrix();
 	glPushMatrix();
 		glRotatef(-90.,0.,1.,0.);
-		drawChair(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
+		drawChairShadow(0.,-0.30*scale,0.75*scale,0.75*scale,0.4*scale,0.05*scale);
 	glPopMatrix();
-	
+    
 	//draw the table
-	drawTable(0.05*scale,1.5*scale,1.0*scale,0.1*scale,0.8*scale);
-	
+    glPushMatrix();
+        drawTable(0.05*scale,1.5*scale,1.0*scale,0.1*scale,0.8*scale);
+    glPopMatrix();
 }
+
 
 /* 
  * Callback : display                              
@@ -317,7 +401,7 @@ void display(void)
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
 		glMultMatrixf((GLfloat*)matrix);
-		drawScene(1.);
+		drawSceneShadow(1.);
 	glPopMatrix();
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
